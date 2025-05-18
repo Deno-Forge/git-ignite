@@ -1,0 +1,87 @@
+// deno-lint-ignore-file require-await
+import { parseRunGitSetupOptions, runGitSetup } from './run_git_setup.ts'
+import { assertSpyCallAsync, spy, assertSpyCallArgs } from '@std/testing/mock'
+import { assertEquals } from '@std/assert'
+
+Deno.test('runGitSetup dry-run integrates all helpers', async () => {
+   const injects = {
+      checkGitInstalled: async (): Promise<true> => {
+         return true
+      },
+      initRepoIfNeeded: async () => {},
+      setRemoteOrigin: async () => {},
+      printGitHubUrl: async () => {
+         return 'https://github.com/new?owner=test&name=repo'
+      },
+      parseGithubSettings: async () => {
+         return { path: 'test/repo', owner: 'test', repo: 'repo' }
+      },
+   }
+   const spies = {
+      checkGitInstalled: spy(injects, 'checkGitInstalled'),
+      initRepoIfNeeded: spy(injects, 'initRepoIfNeeded'),
+      setRemoteOrigin: spy(injects, 'setRemoteOrigin'),
+      printGitHubUrl: spy(injects, 'printGitHubUrl'),
+      parseGithubSettings: spy(injects, 'parseGithubSettings'),
+   }
+
+   await runGitSetup({ dryRun: true }, injects)
+   assertSpyCallAsync(spies.checkGitInstalled, 0)
+   assertSpyCallAsync(spies.parseGithubSettings, 0)
+   assertSpyCallAsync(spies.initRepoIfNeeded, 0)
+   assertSpyCallAsync(spies.setRemoteOrigin, 0, {
+      args: [{ githubPath: 'test/repo', dryRun: true }],
+   })
+   assertSpyCallAsync(spies.printGitHubUrl, 0, {
+      args: [{ owner: 'test', 'repo': 'repo', description: undefined, open: false }],
+   })
+})
+
+Deno.test("uses open flag when dryRun is false", async () => {
+   const injects = {
+      checkGitInstalled: async (): Promise<true> => true,
+      initRepoIfNeeded: async () => {},
+      setRemoteOrigin: spy(async () => {}),
+      printGitHubUrl: spy(async () => {}),
+      parseGithubSettings: async () =>
+          ({ path: "some/path", owner: "octo", repo: "forge" }),
+   };
+
+   // @ts-ignore - using partial mock
+   await runGitSetup({ dryRun: false, open: true }, injects);
+
+   assertSpyCallArgs(injects.printGitHubUrl, 0, [{
+      owner: "octo",
+      repo: "forge",
+      description: undefined,
+      open: true, // ✅ ensures ternary branch executes the `: open` path
+   }]);
+});
+
+
+Deno.test('parseRunGitSetupOptions returns defaults when no args are passed', () => {
+   const result = parseRunGitSetupOptions([])
+   assertEquals(result, {
+      branchName: 'main',
+      dryRun: false,
+      noCommit: false,
+      open: false,
+   })
+})
+
+Deno.test('parseRunGitSetupOptions parses all flags correctly', () => {
+   const result = parseRunGitSetupOptions([
+      '--branch=dev',
+      '--dry-run',
+      '--no-commit',
+      '--open',
+   ])
+
+   assertEquals(result, {
+      branchName: 'dev',
+      dryRun: true,
+      noCommit: true,
+      open: true,
+   })
+})
+
