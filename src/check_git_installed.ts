@@ -16,7 +16,7 @@ export async function checkGitInstalled(
    { run = runShellCommand }: CheckGitInstalledInjects = {},
 ): Promise<true> {
    try {
-      await run({cmd: ['git', '--version']})
+      await run({ cmd: ['git', '--version'] })
       return true
    } catch (err) {
       if (err instanceof Deno.errors.NotFound) {

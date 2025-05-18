@@ -1,5 +1,5 @@
 import { GitError } from './errors.ts'
-import { runShellCommand, ShellCommandError } from "@anvil/run_shell_command";
+import { runShellCommand, ShellCommandError } from '@anvil/run_shell_command'
 
 /** @internal */
 type SetRemoteOriginInjects = {
@@ -27,17 +27,17 @@ export async function setRemoteOrigin(
       throw new GitError('Missing githubPath. Cannot set remote origin.')
    }
 
-   const remoteUrl = `git@github.com:${githubPath}.git`;
+   const remoteUrl = `git@github.com:${githubPath}.git`
    try {
       await run({
-         cmd: ["git", "remote", "add", "origin", remoteUrl],
+         cmd: ['git', 'remote', 'add', 'origin', remoteUrl],
          desc: `Set git remote origin to ${remoteUrl}`,
          dryRun,
-      });
+      })
    } catch (err) {
       if (err instanceof ShellCommandError) {
-         throw new GitError(err.message);
+         throw new GitError(err.message)
       }
-      throw err;
+      throw err
    }
 }

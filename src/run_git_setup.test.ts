@@ -1,6 +1,6 @@
 // deno-lint-ignore-file require-await
 import { parseRunGitSetupOptions, runGitSetup } from './run_git_setup.ts'
-import { assertSpyCallAsync, spy, assertSpyCallArgs } from '@std/testing/mock'
+import { assertSpyCallArgs, assertSpyCallAsync, spy } from '@std/testing/mock'
 import { assertEquals } from '@std/assert'
 
 Deno.test('runGitSetup dry-run integrates all helpers', async () => {
@@ -37,27 +37,25 @@ Deno.test('runGitSetup dry-run integrates all helpers', async () => {
    })
 })
 
-Deno.test("uses open flag when dryRun is false", async () => {
+Deno.test('uses open flag when dryRun is false', async () => {
    const injects = {
       checkGitInstalled: async (): Promise<true> => true,
       initRepoIfNeeded: async () => {},
       setRemoteOrigin: spy(async () => {}),
       printGitHubUrl: spy(async () => {}),
-      parseGithubSettings: async () =>
-          ({ path: "some/path", owner: "octo", repo: "forge" }),
-   };
+      parseGithubSettings: async () => ({ path: 'some/path', owner: 'octo', repo: 'forge' }),
+   }
 
    // @ts-ignore - using partial mock
-   await runGitSetup({ dryRun: false, open: true }, injects);
+   await runGitSetup({ dryRun: false, open: true }, injects)
 
    assertSpyCallArgs(injects.printGitHubUrl, 0, [{
-      owner: "octo",
-      repo: "forge",
+      owner: 'octo',
+      repo: 'forge',
       description: undefined,
       open: true, // ✅ ensures ternary branch executes the `: open` path
-   }]);
-});
-
+   }])
+})
 
 Deno.test('parseRunGitSetupOptions returns defaults when no args are passed', () => {
    const result = parseRunGitSetupOptions([])
@@ -84,4 +82,3 @@ Deno.test('parseRunGitSetupOptions parses all flags correctly', () => {
       open: true,
    })
 })
-

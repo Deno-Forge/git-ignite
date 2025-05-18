@@ -1,4 +1,4 @@
-import { parseDenoConfig } from "@anvil/parse_deno_config";
+import { parseDenoConfig } from '@anvil/parse_deno_config'
 
 export interface GithubSettings {
    path: string

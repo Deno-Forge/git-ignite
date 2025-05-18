@@ -1,7 +1,5 @@
 import { assertEquals, assertRejects } from '@std/assert'
-import {
-   parseGithubSettings,
-} from './parse_github_settings.ts'
+import { parseGithubSettings } from './parse_github_settings.ts'
 function mockParseConfig(config: Record<string, unknown> = {}) {
    return {
       parseConfig: async () => {
