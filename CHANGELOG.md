@@ -1,4 +1,7 @@
-# Changelog
+## 0.1.1 – Forge Automation
+
+- Implemented CI/CD pipeline
+- Added missing JSDoc to exported method
 
 ## 0.1.0 – First spark
 

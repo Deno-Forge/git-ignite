@@ -58,6 +58,7 @@ export async function runGitSetup(
    }
 }
 
+/** Parses options for RunGitSetupOptions */
 export function parseRunGitSetupOptions(
    denoArgs: typeof Deno.args = Deno.args,
 ): RunGitSetupOptions {

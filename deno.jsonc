@@ -1,6 +1,6 @@
 {
   "name": "@deno-forge/git-ignite",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "exports": "./mod.ts",
   "description": "Sparks a Git repository and GitHub config for your Deno module",
   "githubPath": "Deno-Forge/git-ignite",
