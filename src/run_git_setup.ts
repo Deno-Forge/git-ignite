@@ -1,13 +1,12 @@
 import { parseArgs } from '@std/cli/parse-args'
-import { parseGithubSettings as defaultParseGithubSettings } from './parse_github_settings.ts'
 import { checkGitInstalled as defaultCheckGitInstalled } from './check_git_installed.ts'
 import { initGitRepo as defaultInitGitRepo } from './init_git_repo.ts'
 import { setRemoteOrigin as defaultSetRemoteOrigin } from './set_remote_origin.ts'
 import { printGitHubUrl as defaultPrintGithubUrl } from './print_github_url.ts'
+import {GitError} from "./errors.ts";
 
 /** @internal */
 type RunGitSetupInjects = {
-   parseGithubSettings?: typeof defaultParseGithubSettings
    checkGitInstalled?: typeof defaultCheckGitInstalled
    initRepoIfNeeded?: typeof defaultInitGitRepo
    setRemoteOrigin?: typeof defaultSetRemoteOrigin
@@ -18,6 +17,10 @@ type RunGitSetupInjects = {
 export type RunGitSetupOptions = {
    /** The name of the branch to create. Defaults to 'main'. */
    branchName?: string
+   /** GitHub repository path in the form "owner/repo". Required to set remote or print GitHub URL. */
+   githubRepo?: string;
+   /** Description of repository (pre-filled for GitHub) */
+   description?: string;
    /** Whether to run in dry-run mode. Defaults to false. */
    dryRun?: boolean
    /** Whether to skip committing files. Defaults to false. */
@@ -28,9 +31,8 @@ export type RunGitSetupOptions = {
 
 /** Runs all steps of the git setup process */
 export async function runGitSetup(
-   { branchName = 'main', dryRun = false, noCommit = false, open = true }: RunGitSetupOptions = {},
+   {branchName = 'main', dryRun = false, noCommit = false, open = true, githubRepo, description }: RunGitSetupOptions = {},
    {
-      parseGithubSettings = defaultParseGithubSettings,
       checkGitInstalled = defaultCheckGitInstalled,
       initRepoIfNeeded = defaultInitGitRepo,
       setRemoteOrigin = defaultSetRemoteOrigin,
@@ -40,19 +42,16 @@ export async function runGitSetup(
    // Step 1: Ensure Git is installed
    await checkGitInstalled()
 
-   // Step 2: Parse Git settings from deno.json(c)
-   const config = await parseGithubSettings()
-
-   // Step 3: Init repo if needed (creates .gitignore)
+   // Step 2: Init repo if needed (creates .gitignore)
    await initRepoIfNeeded({ branchName, dryRun, noCommit })
 
-   // Step 4: Set remote origin and print URL
-   if (config) {
-      await setRemoteOrigin({ githubPath: config.path, dryRun })
+   // Step 3: Set remote origin and print URL
+   if (githubRepo) {
+      await setRemoteOrigin({ githubPath: githubRepo, dryRun })
+      const [owner, repo] = githubRepo.split('/')
+      if (!owner || !repo) throw new GitError(`Invalid githubRepo format: "${githubRepo}". Expected "owner/repo".`);
       await printGitHubUrl({
-         owner: config.owner,
-         repo: config.repo,
-         description: config.description,
+         owner, repo, description,
          open: dryRun ? false : open,
       })
    }
@@ -64,7 +63,7 @@ export function parseRunGitSetupOptions(
 ): RunGitSetupOptions {
    const args = parseArgs(denoArgs, {
       boolean: ['dry-run', 'no-commit', 'open'],
-      string: ['branch'],
+      string: ['branch','repo', 'description'],
       default: {
          branch: 'main',
          dryRun: false,
@@ -78,5 +77,7 @@ export function parseRunGitSetupOptions(
       dryRun: args['dry-run'],
       noCommit: args['no-commit'],
       open: args['open'],
+      githubRepo: args['repo'],
+      description: args['description'],
    }
 }
